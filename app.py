@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import streamlit as st
 import pickle
 import numpy as np
@@ -568,3 +569,496 @@ Developed using Python • Streamlit • Scikit-Learn
 """,
         unsafe_allow_html=True
     )
+=======
+import streamlit as st
+import pickle
+import numpy as np
+import pandas as pd
+
+# ==========================================
+# PAGE CONFIGURATION
+# ==========================================
+
+st.set_page_config(
+    page_title="Customer Churn Prediction",
+    page_icon="🏦",
+    layout="wide"
+)
+
+# ==========================================
+# LOAD MODEL
+# ==========================================
+
+model = pickle.load(open("random_forest_churn_model.pkl", "rb"))
+scaler = pickle.load(open("scaler.pkl", "rb"))
+
+# ==========================================
+# LOAD DATASET
+# ==========================================
+
+df = pd.read_csv("Churn_Modelling.csv")
+
+# ==========================================
+# CUSTOM CSS
+# ==========================================
+
+st.markdown("""
+<style>
+
+.main{
+    background:#F4F8FB;
+}
+
+.stButton>button{
+    width:100%;
+    height:50px;
+    border-radius:10px;
+    background:#1E88E5;
+    color:white;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.stButton>button:hover{
+    background:#1565C0;
+}
+
+[data-testid="metric-container"]{
+    border-radius:12px;
+    padding:15px;
+    background:white;
+    box-shadow:0px 3px 10px rgba(0,0,0,0.15);
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# SIDEBAR
+# ==========================================
+
+st.sidebar.title("🏦 Banking Dashboard")
+
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "🏠 Home",
+        "📊 Prediction",
+        "ℹ About"
+    ]
+)
+
+# ==========================================
+# HOME PAGE
+# ==========================================
+
+if page == "🏠 Home":
+
+    st.title("🏦 Customer Churn Prediction System")
+
+    st.write(
+        """
+Welcome to the **Customer Churn Prediction System**.
+
+This application predicts whether a customer is likely to leave the bank using a Machine Learning model.
+"""
+    )
+
+    st.image(
+        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200",
+        use_container_width=True
+    )
+
+    st.write("")
+
+    c1,c2,c3,c4=st.columns(4)
+
+    c1.metric("Customers",len(df))
+    c2.metric("Model","Random Forest")
+    c3.metric("Accuracy","86%")
+    c4.metric("Features","11")
+
+    st.write("---")
+
+    st.subheader("Dataset Preview")
+
+    st.dataframe(df.head(),use_container_width=True)
+
+    st.write("---")
+
+    st.subheader("Project Features")
+
+    st.markdown("""
+- Predict Customer Churn
+- Banking Dashboard
+- Random Forest Model
+- Probability Prediction
+- Risk Analysis
+- Customer Summary
+""")
+
+# ==========================================
+# PREDICTION PAGE
+# ==========================================
+
+elif page=="📊 Prediction":
+
+    st.title("📊 Customer Churn Prediction")
+
+    st.write("Enter Customer Details")
+
+    col1,col2=st.columns(2)
+
+    with col1:
+
+        credit_score=st.number_input(
+            "Credit Score",
+            300,
+            900,
+            600
+        )
+
+        age=st.number_input(
+            "Age",
+            18,
+            100,
+            35
+        )
+
+        tenure=st.number_input(
+            "Tenure",
+            0,
+            10,
+            5
+        )
+
+        balance=st.number_input(
+            "Balance",
+            value=50000.0,
+            min_value=0.0
+        )
+
+        num_products=st.selectbox(
+            "Number of Products",
+            [1,2,3,4]
+        )
+
+    with col2:
+
+        has_card=st.selectbox(
+            "Has Credit Card",
+            ["Yes","No"]
+        )
+
+        active_member=st.selectbox(
+            "Is Active Member",
+            ["Yes","No"]
+        )
+
+        salary=st.number_input(
+            "Estimated Salary",
+            value=50000.0,
+            min_value=0.0
+        )
+
+        country=st.selectbox(
+            "Country",
+            [
+                "France",
+                "Germany",
+                "Spain"
+            ]
+        )
+
+        gender=st.selectbox(
+            "Gender",
+            [
+                "Male",
+                "Female"
+            ]
+        )
+
+    st.write("---")
+
+    st.subheader("Customer Details")
+
+    m1,m2,m3=st.columns(3)
+
+    m1.metric("Credit Score",credit_score)
+    m2.metric("Age",age)
+    m3.metric("Balance",f"₹{balance:,.0f}")
+
+    st.write("")
+
+    predict=st.button(
+        "🔍 Predict Customer Churn",
+        key="predict_button"
+    )
+
+    germany=1 if country=="Germany" else 0
+    spain=1 if country=="Spain" else 0
+    male=1 if gender=="Male" else 0
+
+    has_card=1 if has_card=="Yes" else 0
+    active_member=1 if active_member=="Yes" else 0
+
+    if predict:
+
+        data=np.array([[
+            credit_score,
+            age,
+            tenure,
+            balance,
+            num_products,
+            has_card,
+            active_member,
+            salary,
+            germany,
+            spain,
+            male
+        ]])
+
+        data=scaler.transform(data)
+
+        prediction=model.predict(data)
+
+        probability=model.predict_proba(data)
+
+        stay_prob=probability[0][0]*100
+
+        churn_prob=probability[0][1]*100
+
+        st.write("---")
+
+        st.subheader("Prediction Result")
+
+        r1,r2=st.columns(2)
+
+        with r1:
+            st.metric(
+                "Stay Probability",
+                f"{stay_prob:.2f}%"
+            )
+
+        with r2:
+            st.metric(
+                "Churn Probability",
+                f"{churn_prob:.2f}%"
+            )
+
+        st.progress(int(churn_prob))
+                # ==========================================
+        # Prediction Message
+        # ==========================================
+
+        if prediction[0] == 1:
+
+            st.error("🚨 Customer is likely to EXIT")
+
+            st.markdown("""
+### ⚠ High Churn Risk
+
+This customer has a high probability of leaving the bank.
+
+#### Recommended Actions
+- 📞 Contact the customer
+- 🎁 Offer loyalty rewards
+- 💳 Provide special banking offers
+- 👨‍💼 Assign a Relationship Manager
+- 💰 Offer cashback or premium benefits
+""")
+
+        else:
+
+            st.success("🎉 Customer is likely to STAY")
+
+            st.markdown("""
+### ✅ Low Churn Risk
+
+This customer is likely to continue banking.
+
+#### Recommended Actions
+- 😊 Maintain good customer service
+- 💳 Offer premium credit cards
+- 🎁 Reward loyal customers
+- 📈 Suggest investment products
+""")
+
+        # ==========================================
+        # Risk Level
+        # ==========================================
+
+        st.write("---")
+
+        st.subheader("📈 Risk Level")
+
+        if churn_prob < 30:
+            st.success("🟢 LOW RISK")
+
+        elif churn_prob < 70:
+            st.warning("🟡 MEDIUM RISK")
+
+        else:
+            st.error("🔴 HIGH RISK")
+
+        # ==========================================
+        # Customer Summary
+        # ==========================================
+
+        st.write("---")
+
+        st.subheader("📋 Customer Summary")
+
+        summary = pd.DataFrame({
+            "Parameter": [
+                "Credit Score",
+                "Age",
+                "Tenure",
+                "Country",
+                "Gender",
+                "Balance",
+                "Estimated Salary",
+                "Products",
+                "Has Credit Card",
+                "Active Member",
+                "Prediction",
+                "Stay Probability",
+                "Churn Probability"
+            ],
+            "Value": [
+                credit_score,
+                age,
+                tenure,
+                country,
+                gender,
+                balance,
+                salary,
+                num_products,
+                "Yes" if has_card else "No",
+                "Yes" if active_member else "No",
+                "Exit" if prediction[0] == 1 else "Stay",
+                f"{stay_prob:.2f}%",
+                f"{churn_prob:.2f}%"
+            ]
+        })
+
+        st.dataframe(summary, use_container_width=True)
+
+# ==========================================
+# ABOUT PAGE
+# ==========================================
+
+elif page == "ℹ About":
+
+    st.title("ℹ About Customer Churn Prediction System")
+
+    st.markdown("""
+## 🏦 Project Overview
+
+The Customer Churn Prediction System uses Machine Learning to predict
+whether a bank customer is likely to leave.
+
+The model is trained on customer information such as:
+
+- Credit Score
+- Age
+- Tenure
+- Balance
+- Number of Products
+- Credit Card Status
+- Active Membership
+- Estimated Salary
+- Country
+- Gender
+
+The prediction helps banks improve customer retention.
+""")
+
+    st.write("---")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.info("""
+### 🛠 Technologies
+
+- Python
+- Streamlit
+- NumPy
+- Pandas
+- Scikit-learn
+- Pickle
+""")
+
+    with c2:
+        st.success("""
+### 📊 Model Information
+
+Algorithm : Random Forest
+
+Dataset : Churn Modelling
+
+Features : 11
+
+Target : Exited
+""")
+
+    st.write("---")
+
+    st.subheader("✨ Features")
+
+    st.markdown("""
+✅ Customer Churn Prediction
+
+✅ Probability Prediction
+
+✅ Risk Level Detection
+
+✅ Banking Dashboard
+
+✅ Customer Summary
+
+✅ Interactive User Interface
+""")
+
+    st.write("---")
+
+    st.subheader("👩‍💻 Developer")
+
+    st.info("""
+Name : Pooja Dnyaneshwar Bhumkar
+
+Project : Customer Churn Prediction System
+
+Technology :
+Python | Streamlit | Machine Learning
+
+Algorithm :
+Random Forest Classifier
+""")
+
+    st.write("---")
+
+    st.markdown(
+        """
+<div style="text-align:center;
+padding:20px;
+background:#1565C0;
+color:white;
+border-radius:10px;">
+
+<h2>🏦 Customer Churn Prediction System</h2>
+
+<p>
+Developed using Python • Streamlit • Machine Learning
+</p>
+
+<p>
+© 2026 All Rights Reserved
+</p>
+
+</div>
+""",
+        unsafe_allow_html=True
+    )
+>>>>>>> 724b168 (Fixed prediction page errors)
